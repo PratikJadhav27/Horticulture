@@ -1,0 +1,395 @@
+---
+title: "State-wise Comparison of crops Productivity (2016 to 2018)"
+author: "Pratik Jadhav"
+date: "2023-02-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+Name of the dataset: Horticulture Statistics at a Glance-2018
+Link to the dataset: https://docs.google.com/spreadsheets/d/1A69fMYTP6NEi7Ssih3umogFWdYLPI1Ob/edit?usp=sharing&ouid=115097710563273245055&rtpof=true&sd=true
+
+## Description
+
+State-wise Comparison of crops Productivity (2016 to 2018)
+
+Source: Horticultural Statistics at a Glance 2018
+
+The dataset appears to contain information related to crop productivity in 
+India over a period of time, broken down by region, state/union territory, 
+and crop. 
+
+## Questions
+
+1. What is the total production of each crop in each state/UT for each year? 
+2. Which crops are the most produced in each region?
+3. How has crop productivity changed over time for each state/UT? Are there any trends or patterns that emerge?
+4. Which states/UTs have the highest crop productivity for each crop? Are there any factors that explain these differences?
+5. Which states/ut has the lowest productivity for each crop?
+6. How does the type of crop grown to vary by region? Are certain crops more common in certain parts of the country?
+7. Are there any interesting relationships between the variables (e.g., is there a correlation between production and region)?
+8. Are certain crops more common in certain parts of the country?
+9. Why is the specific region's productivity of certain crops high?
+10. Are there any policies that are affecting the productivity of the crops across different states and regions?
+11. Is there any role of climatic conditions that affect the productivity of the crops?
+12. Is any crop has more productivity in the states where climatic conditions are not ideal?
+13. How does the type of crop grown to vary by region?
+
+
+```{r}
+library(readr)
+library(dplyr) 
+library(tidyr) 
+library(stringr)
+library(ggplot2)
+
+table_21_25_combine <- read_csv("Project_1.xlsx - Table_21-25 combine (1).csv")
+names(table_21_25_combine)
+
+unique(table_21_25_combine$crops_name)
+
+
+```
+<br>
+
+# Filtering out data into different years 
+
+```{r}
+year_2016 <- filter( table_21_25_combine, years == 2016)
+
+year_2017 <- filter(table_21_25_combine, years == 2017)
+
+year_2018 <- filter(table_21_25_combine, years == 2018)
+
+```
+
+<br>
+
+## Grouping the states into regions 
+## Create a new column called 'region' based on the state name
+
+```{r}
+region_11 <- table_21_25_combine %>%
+  mutate(region = case_when(
+    states_uts %in% c("JAMMU & KASHMIR", "HIMACHAL PRADESH", "PUNJAB", "HARYANA", "RAJASTHAN","UTTARAKHAND") ~ "Northern",
+    states_uts %in% c( "UTTAR PRADESH", "BIHAR", "JHARKHAND", "ODISHA", "WEST BENGAL","CHHATTISGARH") ~ "Eastern",
+    states_uts %in% c("ANDHRA PRADESH", "KARNATAKA", "KERALA", "TAMIL NADU", "TELANGANA") ~ "Southern",
+    states_uts %in% c("GUJARAT", "MAHARASHTRA") ~ "Western",
+    states_uts %in% c("ARUNACHAL  PRADESH","ASSAM", "MIZORAM", "NAGALAND","SIKKIM", "MEGHALAYA", "MANIPUR", "TRIPURA" ) ~ "North-Eastern",
+    TRUE ~ "Other"
+  ))
+```
+
+<br>
+
+## Group the data by region and summarize the mean production
+
+```{r}
+mean <- region_11 %>%
+  group_by(region) %>%
+  summarize(mean_productivity_mt_ha = mean(`productivity_mt_ha`, na.rm = TRUE))
+unique(region_11$region)
+```
+<br>
+
+# Filtering individual crops data
+
+```{r}
+tapioca <- filter(region_11, crops_name == 'tapioca')
+
+tomato <- filter(region_11, crops_name == 'tomato')
+
+plantation_crops <- filter(region_11, crops_name == 'plantation crops')
+
+chillies_dried <- filter(region_11, crops_name == 'chillies (dried)')
+
+coriander <- filter(region_11, crops_name == 'coriander')
+
+```
+
+<br>
+
+# Numerical Summary 
+
+## Dimensions of the dataset tables 
+
+```{r}
+dim(table_21_25_combine)
+```
+
+<br>
+
+```{r}
+dim(region_11) 
+```
+
+<br>
+
+## Mean productivity of each region
+
+```{r}
+region_11 %>%
+  group_by(region) %>%
+  summarize(mean_productivity_mt_ha = mean(`productivity_mt_ha`, na.rm = TRUE))
+
+```
+
+<br>
+
+## Mean productivity of each state
+
+```{r}
+region_11 %>%
+  group_by(states_uts) %>%
+  summarize(mean_productivity_mt_ha = mean(`productivity_mt_ha`, na.rm = TRUE))
+
+```
+
+<br>
+
+## Mean productivity of each year
+
+```{r}
+region_11 %>%
+  group_by(years) %>%
+  summarize(mean_productivity_mt_ha = mean(`productivity_mt_ha`, na.rm = TRUE))
+
+```
+
+
+<br>
+
+## Mean productivity of each crop
+
+```{r}
+region_11 %>%
+  group_by(crops_name) %>%
+  summarize(mean_productivity_mt_ha = mean(`productivity_mt_ha`, na.rm = TRUE))
+
+```
+
+<br>
+
+# Plotting individual crops data 
+## Plotting data of tomato for all years
+
+```{r}
+g1 <- ggplot(tomato , aes(states_uts, productivity_mt_ha))+ geom_col( color = 'blue', fill = 'blue')
+g1 + ggtitle("Productivity of tomato regionwise (2016-2018)") +
+  xlab( " States ") +
+  ylab(" Productivity in Metric ton/Hectare ")+ theme(axis.text.x = element_text(angle = 90, hjust = 0,vjust=0.5))
+
+```
+
+The x-axis represents the names of different states, and the y-axis represents the productivity of tomatoes in metric ton/hectare. The blue color is used for both the outline and the fill of the bars in the graph.
+
+The graph's main observation would be the comparison of tomato productivity across different states in the region from 2016-2018. The height of each bar represents the productivity of tomato in metric ton/hectare. By looking at the graph, one can easily identify which states have high or low tomato productivity.
+
+<br>
+
+## Plotting data of tapioca for all years 
+
+```{r}
+g2 <- ggplot(tapioca , aes(states_uts, productivity_mt_ha))+ geom_col( color = 'blue', fill = 'blue')
+g2 + ggtitle("Productivity of tapioca regionwise (2016-2018)") +
+  xlab( " States ") +
+  ylab(" Productivity in Metric ton/Hectare ")+ theme(axis.text.x = element_text(angle = 90, hjust = 0,vjust=0.5))
+
+```
+
+The plot shows the productivity of tapioca region-wise for the years 2016 to 2018. The x-axis represents the different states of India where tapioca is grown, while the y-axis represents the productivity of tapioca in metric ton per hectare. The bars in blue color represent the productivity values for each state.
+
+Observations from the plot can include identifying the states with the highest and lowest productivity of tapioca. It can also be used to compare the productivity of tapioca between different states over the three years represented in the plot.
+
+<br>
+
+## Plotting data of chillies_dried for all years
+
+```{r}
+g3 <- ggplot(chillies_dried , aes(states_uts, productivity_mt_ha))+ geom_col( color = 'blue', fill = 'blue')
+g3 + ggtitle("Productivity of chillies_dried regionwise (2016-2018)") +
+  xlab( " States ") +
+  ylab(" Productivity in Metric ton/Hectare ")+ theme(axis.text.x = element_text(angle = 90, hjust = 0,vjust=0.5))
+
+```
+
+The plot is a bar graph showing the productivity of dried chillies in different states and union territories (UTs) of India from 2016 to 2018. The y-axis represents the productivity in metric tons per hectare, while the x-axis shows the different states and UTs. The bars are colored blue and have a blue outline.
+
+From the plot, we can observe that the highest productivity of dried chillies is in Telangana, followed by Andhra Pradesh and Karnataka. The lowest productivity is in Lakshadweep and Dadra and Nagar Haveli. We can also see that there is a considerable variation in productivity between different states and UTs.
+
+<br>
+
+## Plotting data of coriander for all years
+
+```{r}
+g4 <- ggplot(coriander , aes(states_uts, productivity_mt_ha))+ geom_col( color = 'blue', fill = 'blue')
+g4 + ggtitle("Productivity of coriander regionwise (2016-2018)") +
+  xlab( " States ") +
+  ylab(" Productivity in Metric ton/Hectare ")+ theme(axis.text.x = element_text(angle = 90, hjust = 0,vjust=0.5))
+
+```
+
+The plot displays the productivity of coriander in different states of India for the years 2016-2018. The x-axis represents the states, and the y-axis represents the productivity in metric ton per hectare. Each bar in the plot corresponds to the productivity of coriander in a particular state.
+
+Observations:
+
+Rajasthan and Gujarat have the highest productivity of coriander, followed by Haryana and Madhya Pradesh.
+The lowest productivity is observed in the states of West Bengal, Assam, and Bihar.
+
+<br>
+
+## Plotting data of plantation_crops for all years
+
+```{r}
+g5 <- ggplot(plantation_crops , aes(states_uts, productivity_mt_ha))+ geom_col( color = 'blue', fill = 'blue')
+g5 + ggtitle("Productivity of plantation_crops regionwise (2016-2018)") +
+  xlab( " States ") +
+  ylab(" Productivity in Metric ton/Hectare ")+ theme(axis.text.x = element_text(angle = 90, hjust = 0,vjust=0.5))
+
+```
+
+The plot visualizes the productivity of plantation crops in different states and union territories of India between 2016 to 2018. The y-axis represents the productivity in Metric ton/Hectare, and the x-axis represents the states and union territories.
+
+Observations:
+
+Tamil Nadu and Kerala have the highest productivity of plantation crops in the country, followed by Karnataka and Andhra Pradesh.
+Jharkhand and Chhattisgarh have the lowest productivity of plantation crops.
+The productivity of plantation crops in states such as Maharashtra, Gujarat, and Rajasthan is comparatively lower than the southern states.
+
+<br>
+
+## Plotting a Jitter graph for the whole data
+
+```{r pressure, echo=FALSE}
+
+g6 <- ggplot(table_21_25_combine, aes(crops_name, productivity_mt_ha, color = states_uts))
+g6+ geom_jitter()
+```
+
+The plot shows the relationship between crop productivity (in metric tons per hectare) and crop names for different states and union territories in India.
+
+<br>
+
+## Plotting a bar graph for the whole data
+
+```{r}
+g7 <- ggplot(table_21_25_combine, aes(productivity_mt_ha, states_uts, color = crops_name, fill = crops_name))+ geom_col()
+g7+ ggtitle( "States and there productivity for all crops (2016-2018)") +
+  xlab( "Productivity in Metric ton/Hectare  ") +
+  ylab(" States ")
+```
+
+The plot is about the productivity of different crops in various Indian states and Union Territories (UTs) from 2016 to 2018. The y-axis represents the states and UTs, while the x-axis represents the productivity in metric tons per hectare. Each crop is represented by a different color, with the fill representing the same.
+
+<br>
+
+## Plotting bar graph for the data of all crops only for 2016 year
+
+```{r}
+g8 <- ggplot(year_2016, aes(productivity_mt_ha, states_uts, color = crops_name, fill = crops_name))
+g8 + geom_col()
+```
+
+The plot visualizes the relationship between crop productivity and the states/union territories (UTs) in India in the year 2016. Each bar represents a state/UT, and the height of the bar corresponds to the crop productivity measured in metric tons per hectare (mt/ha). 
+
+<br>
+
+## Plotting bar graph for the data of all crops only for 2017 year
+
+```{r}
+g9 <- ggplot(year_2017, aes(productivity_mt_ha, states_uts, color = crops_name, fill = crops_name))
+g9 + geom_col()
+```
+
+The plot is about visualizing the productivity of different crop types grown in various states/union territories of India in the year 2017. The x-axis represents productivity in metric tons per hectare, and the y-axis represents the different states/union territories
+
+<br>
+
+## Plotting bar graph for the data of all crops only for 2018 year
+
+```{r}
+g10 <- ggplot(year_2018, aes(productivity_mt_ha, states_uts, color = crops_name, fill = crops_name))
+g10 + geom_col()
+```
+
+The given code is creating a stacked bar chart using ggplot2 library in R programming language. The dataset being used is "year_2018" and it is plotting the "productivity_mt_ha" variable on the y-axis against the "states_uts" variable on the x-axis.
+
+Each bar is split into different colors according to the "crops_name" variable, with the fill color indicating the same variable. The chart is showing the productivity of various crops grown in different states and union territories in India during the year 2018.
+
+The observations that can be made from the plot are:
+
+The productivity of different crops varies greatly across the different states and union territories.
+
+<br>
+
+## Plotting bar graph of the data from new column region and Productivity Mt/Ha 
+
+```{r}
+g11 <- ggplot(region_11, aes(region, productivity_mt_ha, color = crops_name, fill = crops_name)) + geom_col()
+g11 + ggtitle( "Region and there productivity for all crops (2016-2018)") +
+  xlab( "States ") +
+  ylab(" Productivity in Metric ton/Hectare  ")
+```
+
+The plot shows the productivity of different crops in Region 11 (a geographic region) for the years 2016-2018. The productivity is measured in metric tons per hectare, and each crop is represented by a different color. The plot uses stacked columns to display the productivity of each crop in each state within the region.
+
+Observations:
+
+The productivity of crops varies widely between states within the region, with some states having consistently higher productivity across all crops and others consistently lower.
+Within each state, there are often significant differences in productivity between different crops. 
+There is also variation in productivity between different years, with some crops showing increased productivity in 2018 compared to 2016 and others showing decreased productivity.
+
+<br>
+
+## Plotting all crops data for each year 
+
+```{r}
+g12 <- ggplot(table_21_25_combine, aes(years, productivity_mt_ha, color = crops_name, fill = crops_name)) + geom_col()
+g12 + ggtitle( "Productivity of all crops (2016-2018)") +
+  xlab( " Year ") +
+  ylab(" Productivity in Metric ton/Hectare  ")
+```
+
+The plot shows the productivity of different crops in metric tons per hectare from the years 2016-2018. Each crop is represented by a different color and the bars indicate the productivity for each year. The title of the plot is "Productivity of all crops (2016-2018)" and the x-axis is labeled "Year" while the y-axis is labeled "Productivity in Metric ton/Hectare".
+
+<br>
+
+## Plotting facet_wrap graph of Productivity of all crops for each year and grouped in region 
+
+```{r}
+g13 <- ggplot(region_11, aes(years, productivity_mt_ha, color = crops_name, fill = crops_name)) + geom_col()+ facet_wrap(~region)
+g13 + ggtitle( "Productivity of crops regionwise (2016-2018)") +
+  xlab( " Year ") +
+  ylab(" Productivity in Metric ton/Hectare")
+```
+
+The plot is about the productivity of different crops in different regions from 2016 to 2018. The x-axis represents the years, while the y-axis shows the productivity in metric tons per hectare. The plot is divided into multiple facets, each representing a different region. Within each facet, the different crops are color-coded, and the fill represents the same crop.
+
+## Further Work
+
+In future, I would like to try visualizing the data using all the tables together, that is, a long datasets with all the crops in it. I would also like to make a deep research on each crops such as what are their orgins, what are their growing conditions, etc.
+
+## References
+https://drive.google.com/file/d/1_GLbWHErYstLU-IluN_ichini98GtfJw/view?usp=share_link
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
